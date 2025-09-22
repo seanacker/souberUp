@@ -1,0 +1,7 @@
+{
+  "context": {
+    "alwaysInclude": [
+      "ARCHITECTURE.md"   // or whichever file you want
+    ]
+  }
+}
