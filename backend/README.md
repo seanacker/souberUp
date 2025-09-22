@@ -9,19 +9,37 @@ python -m venv .venv
 
 # Install dependencies
 pip install --upgrade pip
-pip install -r backend\requirements.txt
+pip install -r ./requirements.txt
 
 # Run dev server (reload)
-python -m uvicorn backend.app.main:app --reload --port 8000
-```
-
-Open `http://127.0.0.1:8000/api/v1/hello` to see:
-
-```json
-{"message": "Hello World"}
+python -m uvicorn app.main:app --reload --port 8000
 ```
 
 Interactive API docs at `http://127.0.0.1:8000/docs`.
+
+## GraphQL
+- Endpoint: `POST http://127.0.0.1:8000/api/v1/graphql`
+- Built‑in GraphiQL IDE: open the same URL in a browser
+
+Example queries:
+
+Fetch current goal:
+```graphql
+query GetUsageGoal {
+  getUsageGoal {
+    usageGoal
+  }
+}
+```
+
+Set a new goal:
+```graphql
+mutation SetUsageGoal {
+  setUsageGoal(usageGoal: 7) {
+    success
+  }
+}
+```
 
 ## Notes
 - CORS is permissive for development; restrict in production.

@@ -1,5 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from strawberry.fastapi import GraphQLRouter
+from .graphql_schema import schema
 
 
 app = FastAPI(title="Soberup API", version="0.1.0")
@@ -14,8 +16,7 @@ app.add_middleware(
 )
 
 
-@app.get("/api/v1/hello")
-def read_hello():
-	return {"message": "Hello World"}
+graphql_app = GraphQLRouter(schema)
+app.include_router(graphql_app, prefix="/api/v1/graphql")
 
 
