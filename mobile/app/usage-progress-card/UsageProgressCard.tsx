@@ -5,6 +5,7 @@ import { ProgressBar } from "./ProgressBar";
 type UsageProgressCardProps = {
     usageProgress: number;
     usageGoal: number;
+    usageStats: any;
 }
 
 export const UsageProgressCard = ({usageProgress, usageGoal}: UsageProgressCardProps) => {

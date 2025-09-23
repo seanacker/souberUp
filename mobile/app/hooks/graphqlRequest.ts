@@ -3,7 +3,7 @@ import config from "@/app.config";
 // graphqlClient.ts
 export type GraphQLResponse<T> = { data?: T; errors?: { message: string }[] };
 
-const endpoint = config.apiUrl;
+const endpoint = config.extra?.apiUrl;
 
 export async function graphqlRequest<T>(
   query: string,
@@ -18,6 +18,8 @@ export async function graphqlRequest<T>(
     },
     body: JSON.stringify({ query, variables }),
   });
+
+  console.log("res", res, JSON.stringify(res));
 
   return res.json()
 }
