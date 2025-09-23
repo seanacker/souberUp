@@ -17,25 +17,27 @@ type AppUsage = {
   totalTimeInForeground?: number;
 };
 
-export async function getUsageSinceMonday() {
+export type UsageStats = {
+  from: Date;
+  to: Date;
+  entries: { packageName: string; ms: number }[];
+  totalMs: number;
+};
+
+export async function getUsageSinceMonday(): Promise<UsageStats>{
   if (Platform.OS !== 'android') throw new Error('Android only');
 
   const end = Date.now();
   const monday0 = startOfThisWeekMonday().getTime();
-
-  // Many libs expect an "interval" first arg; 10 is commonly "daily" or "best".
-  // Keep your existing call shape; we just change the time range.
   const dailyOrPackages: Record<string, AppUsage> | AppUsage[] = await queryUsageStats(0, monday0, end);
 
   let entries: { packageName: string; ms: number }[] = [];
   if (Array.isArray(dailyOrPackages)) {
-    // array of per-app objects
     entries = dailyOrPackages.map((u: any) => ({
       packageName: u.packageName ?? 'unknown',
       ms: Number(u.totalTimeInForeground ?? 0),
     }));
   } else if (dailyOrPackages && typeof dailyOrPackages === 'object') {
-    // map keyed by package
     entries = Object.keys(dailyOrPackages).map((pkg) => ({
       packageName: pkg,
       ms: Number((dailyOrPackages as any)[pkg]?.totalTimeInForeground ?? 0),

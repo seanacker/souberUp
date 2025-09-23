@@ -123,7 +123,7 @@ export default function Index() {
         setUsageGoal={setUsageGoal}
         onSaveUsageGoal={handleSaveUsageGoal}
       />
-      <UsageProgressCard usageProgress={5} usageGoal={storedUsageGoal} usageStats={usageStats}/>
+      <UsageProgressCard usageGoalInHours={storedUsageGoal} usageStats={usageStats}/>
     </View>
   );
 }

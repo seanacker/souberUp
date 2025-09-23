@@ -17,11 +17,9 @@ export async function ensureUsageAccess(): Promise<boolean> {
   const granted = await checkForPermission();
   if (granted) return true;
 
-  // Opens: Settings → Security → Apps with usage access
   await IntentLauncher.startActivityAsync(
     IntentLauncher.ActivityAction.USAGE_ACCESS_SETTINGS
   );
 
-  // When the user comes back, check again (see re-check tip below)
   return false;
 }

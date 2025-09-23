@@ -1,14 +1,16 @@
-import { useState } from "react";
 import { View, Text } from "react-native"
 import { ProgressBar } from "./ProgressBar";
+import { UsageStats } from "./getUsageStats";
+import { Skeleton } from "@rneui/base";
 
 type UsageProgressCardProps = {
-    usageProgress: number;
-    usageGoal: number;
-    usageStats: any;
+    usageGoalInHours?: number;
+    usageStats?: UsageStats;
 }
 
-export const UsageProgressCard = ({usageProgress, usageGoal}: UsageProgressCardProps) => {
+export const UsageProgressCard = ({usageGoalInHours, usageStats}: UsageProgressCardProps) => {
+    if (!usageGoalInHours || !usageStats) return (<Skeleton width={100} height={100} />);
+    const usageProgress = (usageStats.totalMs ?? 0) / (usageGoalInHours * 60 * 60 * 1000);
     return (
         <View       
             style={{
@@ -22,9 +24,9 @@ export const UsageProgressCard = ({usageProgress, usageGoal}: UsageProgressCardP
                 Time Used This Week
             </Text>
             <Text style={{fontSize: 20, width: '100%', textAlign: 'right', marginTop: 5}}>
-                {usageGoal}h
+                {usageGoalInHours}h
             </Text>
-            <ProgressBar percentage={usageProgress / usageGoal * 100} />
+            <ProgressBar percentage={usageProgress} />
         </View>
     )
 }

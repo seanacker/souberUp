@@ -19,7 +19,5 @@ export async function graphqlRequest<T>(
     body: JSON.stringify({ query, variables }),
   });
 
-  console.log("res", res, JSON.stringify(res));
-
   return res.json()
 }
