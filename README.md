@@ -29,7 +29,8 @@ python -m venv .venv
 pip install --upgrade pip
 pip install -r backend\requirements.txt
 
-python -m uvicorn backend.app.main:app --reload --port 8000
+# from backend
+python -m uvicorn app.main:app --reload --port 8000
 # Open: http://127.0.0.1:8000/docs
 ```
 
