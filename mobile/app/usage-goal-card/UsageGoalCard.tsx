@@ -3,12 +3,12 @@ import {UsageSlider} from './usage-goal-setter/UsageSlider';
 import {Icon} from '@rneui/themed';
 
 type UsageGoalCardProps = {
-  usageGoal: number;
-  setUsageGoal: (usageGoal: number) => void;
-  onSaveUsageGoal: (usageGoal: number) => void;
+  usageGoalMinutes: number;
+  setUsageGoalMinutes: (usageGoalMinutes: number) => void;
+  onSaveUsageGoal: (usageGoalMinutes: number) => void;
 }
 
-export const UsageGoalCard = ({usageGoal, setUsageGoal, onSaveUsageGoal}: UsageGoalCardProps) => {
+export const UsageGoalCard = ({usageGoalMinutes, setUsageGoalMinutes, onSaveUsageGoal}: UsageGoalCardProps) => {
 
 
   return (
@@ -25,7 +25,7 @@ export const UsageGoalCard = ({usageGoal, setUsageGoal, onSaveUsageGoal}: UsageG
         <Text style={{fontSize: 16, fontWeight: 'bold'}}>Weekly Usage Goal</Text>
         <Pressable
           onPress={() => {
-            onSaveUsageGoal(usageGoal);
+            onSaveUsageGoal(usageGoalMinutes);
           }}
           style={{
             padding: 10,
@@ -41,9 +41,9 @@ export const UsageGoalCard = ({usageGoal, setUsageGoal, onSaveUsageGoal}: UsageG
         </Pressable>
       </View>
       <Text style={{fontSize: 20, fontWeight: 'bold', width: '100%', textAlign: 'center', marginTop: 5}}>
-        {usageGoal}h
+        {usageGoalMinutes / 60}h
       </Text>
-      <UsageSlider setUsageGoal={setUsageGoal} usageGoal={usageGoal} />
+      <UsageSlider setUsageGoalMinutes={setUsageGoalMinutes} usageGoal={usageGoalMinutes} />
     </View>
   );
 };

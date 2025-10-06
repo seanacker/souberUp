@@ -2,15 +2,15 @@ import { Slider } from "@rneui/themed";
 import { Text, View } from "react-native";
 
 export interface SliderProps {
-    setUsageGoal: (usageGoal: number) => void;
+    setUsageGoalMinutes: (usageGoalMinutes: number) => void;
     usageGoal: number;
 }
 
-export const UsageSlider = ({ setUsageGoal, usageGoal }: SliderProps) => {
+export const UsageSlider = ({ setUsageGoalMinutes, usageGoal }: SliderProps) => {
     return (
         <>
         <Slider 
-            onValueChange={setUsageGoal} 
+            onValueChange={(value) => setUsageGoalMinutes(value * 60)} 
             value={usageGoal} 
             minimumValue={0}
             maximumValue={14} 

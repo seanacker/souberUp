@@ -21,6 +21,9 @@ Interactive API docs at `http://127.0.0.1:8000/docs`.
 - Endpoint: `POST http://127.0.0.1:8000/api/v1/graphql`
 - Built‑in GraphiQL IDE: open the same URL in a browser
 
+## Forward port for mobile dev
+adb reverse tcp:8000 tcp:8000
+
 Example queries:
 
 Fetch current goal:

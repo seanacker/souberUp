@@ -1,6 +1,6 @@
 # app/db/models.py
 from datetime import datetime, date
-from sqlalchemy import String, Integer, Date, Enum, ForeignKey, UniqueConstraint, CheckConstraint, text
+from sqlalchemy import Boolean, String, Integer, Date, Enum, ForeignKey, UniqueConstraint, CheckConstraint, text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 import enum
@@ -21,6 +21,9 @@ class User(Base):
     usage_goal_minutes: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("0"))
     created_at: Mapped[datetime] = mapped_column(server_default=text("now()"))
     updated_at: Mapped[datetime] = mapped_column(server_default=text("now()"))
+
+    password_hash: Mapped[str] = mapped_column(String, nullable=False)
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
 
 class Connection(Base):
     __tablename__ = "connections"

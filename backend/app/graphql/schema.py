@@ -1,5 +1,6 @@
 # app/gql/schema.py
 from __future__ import annotations
+import bcrypt
 import strawberry
 from datetime import date, timedelta
 from typing import Optional, List
@@ -7,12 +8,41 @@ from strawberry.types import Info
 from sqlalchemy import select, func
 
 from app.db.models import User as UserModel, UsageDaily, Connection as ConnModel, ConnectionStatus
+from app.auth.auth import create_access_token, create_refresh_token, decode_token, hash_password, verify_password
+
+@strawberry.input
+class RegisterInput:
+    name: str
+    phone_number: str
+    password: str
+    usage_goal_minutes: int = 0
+
+@strawberry.input
+class LoginInput:
+    phone_number: str
+    password: str
+
+@strawberry.type
+class AuthPayload:
+    access_token: str
+    refresh_token: str
+    token_type: str = "Bearer"
+
+@strawberry.type
+class Me:
+    id: strawberry.ID
+    name: str
+    phone_number: str
 
 @strawberry.type
 class WeeklyProgress:
     goal_minutes: int
     total_ms: int
     percent: float
+@strawberry.input
+class UserUpdateInput:
+    name: Optional[str] = None
+    usage_goal_minutes: Optional[int] = None
 
 @strawberry.type
 class User:
@@ -20,6 +50,7 @@ class User:
     name: str
     phone_number: str
     usage_goal_minutes: int
+
 
     @strawberry.field
     async def weekly_progress(self, info: Info, week_start: date) -> WeeklyProgress:
@@ -42,7 +73,29 @@ class User:
 @strawberry.type
 class Query:
     @strawberry.field
+    async def me(self, info: Info) -> Optional[User]:
+        cu = info.context.get("current_user")
+        if not cu:
+            return None
+        session = info.context["session"]
+        u = await session.get(UserModel, cu.id)
+        if not u:
+            return None
+        return User(
+            id=str(u.id),
+            name=u.name,
+            phone_number=u.phone_number,
+            usage_goal_minutes=u.usage_goal_minutes,
+        )
+
+    @strawberry.field
     async def user(self, info: Info, id: strawberry.ID) -> Optional[User]:
+        current_user = info.context.get("current_user")
+        if not current_user:
+            raise PermissionError("Authentication required")
+        if str(current_user.id) != str(self.id):
+            raise PermissionError("Not allowed to view other users’ data")
+        
         session = info.context["session"]
         u = await session.get(UserModel, id)
         if not u:
@@ -56,6 +109,12 @@ class Query:
 
     @strawberry.field
     async def search_users(self, info: Info, q: str, limit: int = 20) -> List[User]:
+        current_user = info.context.get("current_user")
+        if not current_user:
+            raise PermissionError("Authentication required")
+        if str(current_user.id) != str(self.id):
+            raise PermissionError("Not allowed to view other users’ data")
+        
         session = info.context["session"]
         rows = (await session.execute(
             select(UserModel).where(UserModel.name.ilike(f"%{q}%")).limit(limit)
@@ -73,39 +132,32 @@ class Query:
 @strawberry.type
 class Mutation:
     @strawberry.mutation
-    async def upsert_user(
-        self,
-        info: Info,
-        name: str,
-        phone_number: str,
-        usage_goal_minutes: int,
-    ) -> User:
-        session = info.context["session"]
-        existing = (await session.execute(
-            select(UserModel).where(UserModel.phone_number == phone_number)
-        )).scalar_one_or_none()
+    async def update_user(self, info, data: UserUpdateInput) -> User:
+        cu = info.context.get("current_user")
+        if not cu:
+            raise PermissionError("Authentication required")
 
-        if existing:
-            existing.name = name
-            existing.usage_goal_minutes = usage_goal_minutes
-            await session.commit()
-            await session.refresh(existing)
-            u = existing
-        else:
-            u = UserModel(
-                name=name,
-                phone_number=phone_number,
-                usage_goal_minutes=usage_goal_minutes,
-            )
-            session.add(u)
-            await session.commit()
-            await session.refresh(u)
+        session = info.context["session"]
+
+        # Load the current user from DB
+        user = await session.get(UserModel, cu.id)
+        if not user:
+            raise ValueError("User not found")
+
+        # Apply only provided fields
+        if data.name is not None:
+            user.name = data.name
+        if data.usage_goal_minutes is not None:
+            user.usage_goal_minutes = data.usage_goal_minutes
+
+        await session.commit()
+        await session.refresh(user)
 
         return User(
-            id=str(u.id),
-            name=u.name,
-            phone_number=u.phone_number,
-            usage_goal_minutes=u.usage_goal_minutes,
+            id=str(user.id),
+            name=user.name,
+            phone_number=user.phone_number,
+            usage_goal_minutes=user.usage_goal_minutes,
         )
 
     @strawberry.mutation
@@ -130,5 +182,53 @@ class Mutation:
 
         await session.commit()
         return True
+
+    @strawberry.mutation
+    async def register(self, info: Info, data: RegisterInput) -> Me:
+        session = info.context["session"]
+        # ensure unique phone_number
+        exists = await session.execute(
+            select(UserModel).where(UserModel.phone_number == data.phone_number)
+        )
+        if exists.scalar_one_or_none():
+            raise ValueError("Phone number already registered")
+
+        user = UserModel(
+            name=data.name,
+            phone_number=data.phone_number,
+            usage_goal_minutes=data.usage_goal_minutes,
+            password_hash=hash_password(data.password),
+        )
+        session.add(user)
+        await session.commit()
+        await session.refresh(user)
+        return Me(id=user.id, name=user.name, phone_number=user.phone_number)
+    
+    @strawberry.mutation
+    async def login(self, info: Info, data: LoginInput) -> AuthPayload:
+        session = info.context["session"]
+        q = await session.execute(
+            select(UserModel).where(UserModel.phone_number == data.phone_number)
+        )
+        user = q.scalar_one_or_none()
+        if not user or not user.is_active or not verify_password(data.password, user.password_hash):
+            raise ValueError("Invalid credentials")
+
+        return AuthPayload(
+            access_token=create_access_token(user.id),
+            refresh_token=create_refresh_token(user.id),
+        )
+    
+    @strawberry.mutation
+    async def refresh_token(self, info: Info, refresh_token: str) -> AuthPayload:
+        payload = decode_token(refresh_token)
+        if not payload or payload.get("type") != "refresh":
+            raise ValueError("Invalid refresh token")
+        user_id = payload.get("sub")
+        # (optional) check user still active, token revocation list, etc.
+        return AuthPayload(
+            access_token=create_access_token(user_id),
+            refresh_token=create_refresh_token(user_id),
+        )
 
 schema = strawberry.Schema(query=Query, mutation=Mutation, types=[User, WeeklyProgress])
