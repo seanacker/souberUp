@@ -37,7 +37,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const setTokens = async ({ accessToken, refreshToken }: Tokens) => {
-    console.log("invoiking set tokens with", accessToken, refreshToken)
     await SecureStore.setItemAsync(ACCESS_KEY, accessToken);
     await SecureStore.setItemAsync(REFRESH_KEY, refreshToken);
     const userId = safeDecode(accessToken)?.sub ?? null;
@@ -45,8 +44,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const clearTokens = async () => {
-    
-    console.log("invoiking clear tokens ")
     await SecureStore.deleteItemAsync(ACCESS_KEY);
     await SecureStore.deleteItemAsync(REFRESH_KEY);
     setState({accessToken: null, refreshToken: null, userId: null });
@@ -62,7 +59,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       loginMutation,
       { phone: phoneNumber, pw: password },
     );
-    console.log("res is ", res)
     await setTokens(res.login);
   };
 
@@ -74,7 +70,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   let refreshingPromise: Promise<string | null> | null = null;
 
   const ensureAccessToken = async (): Promise<string | null> => {
-    console.log("ensureAccessToken state is ", state)
     const { accessToken, refreshToken } = state;
     if (!accessToken || !refreshToken) return null;
 
@@ -90,7 +85,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             `mutation($rt:String!){ refreshToken(refreshToken:$rt){ accessToken refreshToken } }`,
             { rt: refreshToken },
           );
-          console.log("res is", res)
           await setTokens(res.login);
           return res.login.accessToken;
         } catch {

@@ -14,7 +14,6 @@ REFRESH_TTL_SECONDS = 7 * 24 * 3600
 pwd_ctx = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 def hash_password(plain: str) -> str:
-    print(type(plain), plain, len(plain))
     return pwd_ctx.hash(plain)
 
 def verify_password(plain: str, hashed: str) -> bool:
@@ -47,20 +46,16 @@ async def verify_token(token: str):
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         user_id = payload.get("sub")
         if not user_id:
-            print("verify_token: token missing 'sub'")
             return None
 
         # 2. Load user from DB
         async with SessionLocal() as session:
             user = await session.get(UserModel, user_id)
             if not user:
-                print("verify_token: user not found")
                 return None
             return user
 
     except jwt.ExpiredSignatureError:
-        print("verify_token: token expired")
         return None
     except jwt.InvalidTokenError as e:
-        print("verify_token: invalid token", e)
         return None

@@ -10,14 +10,11 @@ from app.auth.auth import verify_token
 app = FastAPI(title="Soberup API", version="0.1.0")
 
 async def get_context(request: Request, session = Depends(get_session)):
-    print('trying to get context')
     auth = request.headers.get("Authorization")
     current_user = None
-    print('auth is', auth)
     if auth and auth.startswith("Bearer "):
         token = auth.split(" ", 1)[1]
         try:
-            print('trying to veify token')
             current_user = await verify_token(token)
         except Exception as e:
             print("Token verification failed:", e)

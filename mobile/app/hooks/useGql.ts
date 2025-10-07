@@ -9,7 +9,6 @@ export function useGql() {
 
   const call = async <T>(query: string, variables?: Record<string, any>) => {
     const token = await ensureAccessToken();
-    console.log("requesting", query, "with", token)
     const res = await request<T>(query, variables, token)
     
     return res

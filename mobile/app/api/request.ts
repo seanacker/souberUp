@@ -11,7 +11,6 @@ export async function request<T>(
   variables?: Record<string, unknown>,
   token?: string | null
 ): Promise<T> {
-  console.log("trying to request3", query, token, variables)
   
   const res = await fetch(endpoint, {
     method: "POST",
@@ -21,15 +20,12 @@ export async function request<T>(
     },
     body: JSON.stringify({ query, variables }),
   });
- console.log("0")
   const text = await res.text();
 
-  console.log("1", res)
   if (!res.ok) {
     throw new Error(`HTTP ${res.status}: ${text.slice(0, 300)}`);
   }
   
-  console.log("2")
   let json: GraphQLResponse<T>;
   try {
     json = JSON.parse(text);
@@ -37,10 +33,9 @@ export async function request<T>(
     throw new Error(`Non-JSON response: ${text.slice(0, 300)}`);
   }
   
-  console.log("3")
   if (json.errors?.length) {
     throw new Error(json.errors[0].message || "fetching error");
   }
-  console.log("4", json.data)
+  console.log("request succeeded with:", json.data)
   return json.data as T;
 }

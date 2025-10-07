@@ -14,12 +14,14 @@ export function watchUsageAccess(onGranted: () => void) {
 }
 
 export async function ensureUsageAccess(): Promise<boolean> {
+  console.log("trying to ensure usage access")
   const granted = await checkForPermission();
   if (granted) return true;
-
+  
   await IntentLauncher.startActivityAsync(
     IntentLauncher.ActivityAction.USAGE_ACCESS_SETTINGS
   );
-
+  
+  console.log("usage access not granted")
   return false;
 }

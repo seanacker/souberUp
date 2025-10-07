@@ -14,6 +14,5 @@ export default function Index() {
 
 function AuthGate() {
   const {accessToken } = useAuth();
-  console.log(accessToken)
   return accessToken ? <Home /> : <LoginScreen />;
 }
