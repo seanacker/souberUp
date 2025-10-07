@@ -1,7 +1,7 @@
 import { AuthProvider, useAuth } from './auth/AuthContext';
 import React from 'react';
-import { Home } from './components/Home';
-import { LoginScreen } from './components/Login';
+import { Home } from './views/Home';
+import { LoginScreen } from './views/Login';
 
 
 export default function Index() {

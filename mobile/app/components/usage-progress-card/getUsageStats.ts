@@ -25,6 +25,7 @@ export type UsageStats = {
 };
 
 export async function getUsageSinceMonday(): Promise<UsageStats>{
+  console.log("trying to get usage since monday")
   if (Platform.OS !== 'android') throw new Error('Android only');
 
   const end = Date.now();
@@ -45,5 +46,6 @@ export async function getUsageSinceMonday(): Promise<UsageStats>{
   }
 
   const totalMs = entries.reduce((a, e) => a + e.ms, 0);
+  console.log("got usage access ", totalMs)
   return { from: new Date(monday0), to: new Date(end), entries, totalMs };
 }

@@ -161,6 +161,66 @@ class Mutation:
         )
 
     @strawberry.mutation
+    async def add_contact(self, info: Info, phone_number: str) -> User:
+        cu = info.context.get("current_user")
+        if not cu:
+            raise PermissionError("Authentication required")
+
+        session = info.context["session"]
+
+        # Get the invoking user
+        user = await session.get(UserModel, cu.id)
+        if not user:
+            raise ValueError("User not found")
+
+        # Find the other user by phone number
+        other_user = (
+            await session.execute(
+                select(UserModel).where(UserModel.phone_number == phone_number)
+            )
+        ).scalar_one_or_none()
+
+        if not other_user:
+            raise ValueError("No user found with this phone number")
+
+        if other_user.id == user.id:
+            raise ValueError("Cannot add yourself as a contact")
+
+        # Check if connection already exists
+        existing = (
+            await session.execute(
+                select(ConnModel).where(
+                    ConnModel.user_id == user.id,
+                    ConnModel.other_user_id == other_user.id,
+                )
+            )
+        ).scalar_one_or_none()
+
+        if existing:
+            raise ValueError("Contact already added")
+
+        conn1 = ConnModel(
+            user_id=user.id,
+            other_user_id=other_user.id,
+            status=ConnectionStatus.accepted,  
+        )
+        conn2 = ConnModel(
+            user_id=other_user.id,
+            other_user_id=user.id,
+            status=ConnectionStatus.accepted,# set to pending to correctly implement
+        )
+
+        session.add_all([conn1, conn2])
+        await session.commit()
+
+        return User(
+            id=str(other_user.id),
+            name=other_user.name,
+            phone_number=other_user.phone_number,
+            usage_goal_minutes=other_user.usage_goal_minutes,
+        )
+
+    @strawberry.mutation
     async def add_daily_usage(
         self,
         info: Info,
